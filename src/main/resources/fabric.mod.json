@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "tomdftweaks",
+	"version": "${version}",
+	"name": "TomDfTweaks",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/tomdftweaks/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"tom.tomdftweaks.TomDfTweaks"
+		],
+		"client": [
+			"tom.tomdftweaks.TomDfTweaksClient"
+		]
+	},
+	"mixins": [
+		"tomdftweaks.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.15",
+		"minecraft": "~1.21.11",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
