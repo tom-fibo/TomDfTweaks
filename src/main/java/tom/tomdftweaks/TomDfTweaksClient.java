@@ -35,16 +35,18 @@ public class TomDfTweaksClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-			TomDfTweaksConfig.load();
-			noteBlockSounds = TomDfTweaksConfig.settings.get("noteBlockSounds");
-			if (noteBlockSounds == null) {
-				noteBlockSounds = new HashMap<String, Boolean>();
-			}
-			client.player.sendMessage(net.minecraft.text.Text.literal("§7[§2TomDfTweaks§7] §aSettings loaded."), false);
+			if (TomDfTweaksConfig.load()) {
+				noteBlockSounds = TomDfTweaksConfig.settings.get("noteBlockSounds");
+				if (noteBlockSounds == null) {
+					noteBlockSounds = new HashMap<String, Boolean>();
+				}
+				client.player.sendMessage(net.minecraft.text.Text.literal("§7[§2TomDfTweaks§7] §aSettings loaded."),
+						false);
 
-			client.options.getSoundVolumeOption(SoundCategory.RECORDS)
-					.setValue(1.0);
-			client.options.write();
+				client.options.getSoundVolumeOption(SoundCategory.RECORDS)
+						.setValue(1.0);
+				client.options.write();
+			}
 		});
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {

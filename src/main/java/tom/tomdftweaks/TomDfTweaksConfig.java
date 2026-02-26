@@ -17,26 +17,36 @@ public class TomDfTweaksConfig {
     private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir()
             .resolve("tom_df_tweaks_settings.json");
 
-    public static Map<String, Map<String, Boolean>> settings = new HashMap<>();
+    public static Map<String, Map<String, Boolean>> settings = null;
 
-    public static void save() {
+    public static boolean save() {
         try (Writer writer = new FileWriter(CONFIG_PATH.toFile())) {
             GSON.toJson(settings, writer);
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
     }
 
-    public static void load() {
+    public static boolean load() {
+        if (settings != null) {
+            return false;
+        }
+
         File file = CONFIG_PATH.toFile();
-        if (!file.exists())
-            return;
+        if (!file.exists()) {
+            settings = new HashMap<String, Map<String, Boolean>>();
+            return true;
+        }
 
         try (Reader reader = new FileReader(file)) {
             settings = GSON.fromJson(reader, new TypeToken<Map<String, Map<String, Boolean>>>() {
             }.getType());
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
     }
 }
