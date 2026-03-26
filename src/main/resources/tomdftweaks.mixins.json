@@ -3,7 +3,10 @@
 	"package": "tom.tomdftweaks.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [],
-	"client": [],
+	"client": [
+		"WorldEditAxeMixin",
+		"FullbrightMixin"
+	],
 	"injectors": {
 		"defaultRequire": 1
 	},
