@@ -98,8 +98,8 @@ public class TomDfTweaksClient implements ClientModInitializer {
 					client.inGameHud.getChatHud().addMessage(Text.literal("§7[§2TomDfTweaks§7] §6Note blocks "
 							+ (enableNoteBlockSounds ? "§eenabled" : "§csilenced") + "§6."));
 
-					currentFullbright = (noteBlockSounds.containsKey(currentPlot)
-							&& noteBlockSounds.get(currentPlot));
+					currentFullbright = (fullbright.containsKey(currentPlot)
+							&& fullbright.get(currentPlot));
 					client.inGameHud.getChatHud().addMessage(Text.literal("§7[§2TomDfTweaks§7] §6Fullbright "
 							+ (currentFullbright ? "§eenabled" : "§cdisabled") + "§6."));
 				}
