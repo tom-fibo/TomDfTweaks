@@ -5,6 +5,7 @@
 	"mixins": [],
 	"client": [
 		"AutoRespawnMixin",
+		"FullDebugInfoMixin",
 		"WorldEditAxeMixin",
 		"FullbrightMixin",
 		"FullbrightWorldRendererMixin"
