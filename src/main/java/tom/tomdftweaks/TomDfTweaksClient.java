@@ -19,6 +19,7 @@ import net.minecraft.client.option.KeyBinding.Category;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameMode;
 
 public class TomDfTweaksClient implements ClientModInitializer {
@@ -42,6 +43,9 @@ public class TomDfTweaksClient implements ClientModInitializer {
 	public static long lastDeathTime = 0;
 	public static boolean shouldRestoreSprint = false;
 	public static boolean awaitingRespawn = false;
+
+	private static BlockPos devLocation = null;
+	private static BlockPos playLocation = null;
 
 	@Override
 	public void onInitializeClient() {
@@ -72,6 +76,8 @@ public class TomDfTweaksClient implements ClientModInitializer {
 			lastDeathTime = 0;
 			shouldRestoreSprint = false;
 			awaitingRespawn = false;
+			devLocation = null;
+			playLocation = null;
 		});
 
 		ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
@@ -92,7 +98,12 @@ public class TomDfTweaksClient implements ClientModInitializer {
 					client.inGameHud.getChatHud()
 							.addMessage(Text.literal("§7[§2TomDfTweaks§7] §aNow in dev mode."));
 				} else if (joinPlot.matches()) {
-					currentPlot = joinPlot.group(1) + "|" + joinPlot.group(2);
+					String newPlot = joinPlot.group(1) + "|" + joinPlot.group(2);
+					if (!newPlot.equals(currentPlot)) {
+						devLocation = null;
+						playLocation = null;
+					}
+					currentPlot = newPlot;
 					inDevMode = false;
 					client.inGameHud.getChatHud()
 							.addMessage(Text.literal("§7[§2TomDfTweaks§7] §aJoined plot \"§r" + currentPlot + "§a\"."));
@@ -132,6 +143,12 @@ public class TomDfTweaksClient implements ClientModInitializer {
 				"key.tomdftweaks.spectator",
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_V,
+				Category.MISC));
+
+		KeyBinding modeSwitchKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+				"key.tomdftweaks.modeswitch",
+				InputUtil.Type.KEYSYM,
+				GLFW.GLFW_KEY_B,
 				Category.MISC));
 
 		ClientTickEvents.END_CLIENT_TICK.register((a) -> {
@@ -192,6 +209,34 @@ public class TomDfTweaksClient implements ClientModInitializer {
 							Text.literal(
 									"§7[§2TomDfTweaks§7] §6Fullbright for §r" + currentPlot + " " + status + "§6."),
 							true);
+				}
+			}
+
+			// Mode switch (dev/play) with location preservation
+			while (modeSwitchKey.wasPressed()) {
+				if (client.player != null) {
+					BlockPos pos = client.player.getBlockPos();
+
+					commandsToSend.add("ptp 0 50 0");
+					delaysToSend.add(1);
+
+					if (inDevMode) {
+						devLocation = pos;
+						commandsToSend.add("play");
+						delaysToSend.add(8);
+						if (playLocation != null) {
+							commandsToSend.add("ptp " + playLocation.getX() + " " + playLocation.getY() + " " + playLocation.getZ());
+							delaysToSend.add(20);
+						}
+					} else {
+						playLocation = pos;
+						commandsToSend.add("dev");
+						delaysToSend.add(8);
+						if (devLocation != null) {
+							commandsToSend.add("ptp " + devLocation.getX() + " " + devLocation.getY() + " " + devLocation.getZ());
+							delaysToSend.add(20);
+						}
+					}
 				}
 			}
 
