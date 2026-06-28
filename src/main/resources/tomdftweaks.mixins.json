@@ -6,6 +6,7 @@
 	"client": [
 		"AutoRespawnMixin",
 		"FullDebugInfoMixin",
+		"InventoryDistributeMixin",
 		"WorldEditAxeMixin",
 		"FullbrightMixin",
 		"FullbrightWorldRendererMixin"
