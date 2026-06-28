@@ -39,6 +39,10 @@ public class TomDfTweaksClient implements ClientModInitializer {
 	public static Map<String, Boolean> fullbright = new HashMap<String, Boolean>();
 	public static boolean currentFullbright = false;
 
+	public static long lastDeathTime = 0;
+	public static boolean shouldRestoreSprint = false;
+	public static boolean awaitingRespawn = false;
+
 	@Override
 	public void onInitializeClient() {
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
@@ -64,6 +68,10 @@ public class TomDfTweaksClient implements ClientModInitializer {
 			TomDfTweaksConfig.settings.put("noteBlockSounds", noteBlockSounds);
 			TomDfTweaksConfig.settings.put("fullbright", fullbright);
 			TomDfTweaksConfig.save();
+
+			lastDeathTime = 0;
+			shouldRestoreSprint = false;
+			awaitingRespawn = false;
 		});
 
 		ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
@@ -126,8 +134,18 @@ public class TomDfTweaksClient implements ClientModInitializer {
 				GLFW.GLFW_KEY_V,
 				Category.MISC));
 
-		//send a message: `client.inGameHud.getChatHud().addMessage(Text.literal("[message]"));`
 		ClientTickEvents.END_CLIENT_TICK.register((a) -> {
+			// Auto-respawn: clear flag once player is alive again
+			if (awaitingRespawn && client.player != null && client.player.isAlive()) {
+				awaitingRespawn = false;
+			}
+
+			// Restore sprint toggle after respawning
+			if (shouldRestoreSprint && client.player != null && client.player.isAlive()) {
+				client.options.sprintKey.setPressed(true);
+				shouldRestoreSprint = false;
+			}
+
 			//Send commands, if queued
 			if (commandsToSend.size() > 0) {
 				commandSendCountdown++;
