@@ -86,13 +86,13 @@ public class TomDfTweaksClient implements ClientModInitializer {
 				String messageStr = message.getString();
 				//TomDfTweaks.LOGGER.info("Received game message: " + messageStr);
 				Matcher joinPlot = Pattern.compile("» Joined game: (.+) by (.+)\\.").matcher(messageStr);
-				if (messageStr.contains("Welcome back to DiamondFire!")) {
+				/*if (messageStr.contains("Welcome back to DiamondFire!")) {
 					currentPlot = "";
 					commandsToSend.add("support queue");
 					delaysToSend.add(20);
-				} else if (messageStr.contains("Use /tip to show your appreciation and receive a")) {
+				} else */if (messageStr.contains("Use /tip to show your appreciation and receive a")) {
 					commandsToSend.add("tip");
-					delaysToSend.add(80);
+					delaysToSend.add(60);
 				} else if (messageStr.contains("You are now in dev mode.")) {
 					inDevMode = true;
 					client.inGameHud.getChatHud()

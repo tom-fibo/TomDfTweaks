@@ -14,7 +14,8 @@ public class AutoRespawnMixin {
 
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
     private void onSetScreen(Screen screen, CallbackInfo ci) {
-        if (!(screen instanceof DeathScreen)) return;
+        if (!(screen instanceof DeathScreen))
+            return;
 
         MinecraftClient client = (MinecraftClient) (Object) this;
 
@@ -26,6 +27,7 @@ public class AutoRespawnMixin {
         // Suppress duplicate death screens while waiting for respawn packet
         if (TomDfTweaksClient.awaitingRespawn) {
             ci.cancel();
+            client.close();
             return;
         }
 
@@ -40,5 +42,7 @@ public class AutoRespawnMixin {
             }
             ci.cancel();
         }
+
+        client.close();
     }
 }
