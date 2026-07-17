@@ -5,6 +5,7 @@
 	"mixins": [],
 	"client": [
 		"AutoRespawnMixin",
+		"ChatRunCommandPasteMixin",
 		"FullDebugInfoMixin",
 		"InventoryDistributeMixin",
 		"WorldEditAxeMixin",
