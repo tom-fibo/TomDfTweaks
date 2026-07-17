@@ -217,24 +217,23 @@ public class TomDfTweaksClient implements ClientModInitializer {
 				if (client.player != null) {
 					BlockPos pos = client.player.getBlockPos();
 
-					commandsToSend.add("ptp 0 50 0");
-					delaysToSend.add(1);
-
 					if (inDevMode) {
 						devLocation = pos;
 						commandsToSend.add("play");
-						delaysToSend.add(8);
+						delaysToSend.add(1);
 						if (playLocation != null) {
-							commandsToSend.add("ptp " + playLocation.getX() + " " + playLocation.getY() + " " + playLocation.getZ());
-							delaysToSend.add(20);
+							commandsToSend.add("ptp " + playLocation.getX() + " " + playLocation.getY() + " "
+									+ playLocation.getZ());
+							delaysToSend.add(10);
 						}
 					} else {
 						playLocation = pos;
 						commandsToSend.add("dev");
-						delaysToSend.add(8);
+						delaysToSend.add(1);
 						if (devLocation != null) {
-							commandsToSend.add("ptp " + devLocation.getX() + " " + devLocation.getY() + " " + devLocation.getZ());
-							delaysToSend.add(20);
+							commandsToSend.add(
+									"ptp " + devLocation.getX() + " " + devLocation.getY() + " " + devLocation.getZ());
+							delaysToSend.add(10);
 						}
 					}
 				}
