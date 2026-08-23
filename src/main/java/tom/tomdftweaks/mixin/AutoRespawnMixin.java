@@ -19,15 +19,9 @@ public class AutoRespawnMixin {
 
         MinecraftClient client = (MinecraftClient) (Object) this;
 
-        // Save sprint toggle state before setScreen's unpressAll() clears it
-        if (client.options.sprintKey.isPressed()) {
-            TomDfTweaksClient.shouldRestoreSprint = true;
-        }
-
         // Suppress duplicate death screens while waiting for respawn packet
         if (TomDfTweaksClient.awaitingRespawn) {
             ci.cancel();
-            client.close();
             return;
         }
 
@@ -42,7 +36,5 @@ public class AutoRespawnMixin {
             }
             ci.cancel();
         }
-
-        client.close();
     }
 }

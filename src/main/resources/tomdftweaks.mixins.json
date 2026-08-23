@@ -10,7 +10,8 @@
 		"InventoryDistributeMixin",
 		"WorldEditAxeMixin",
 		"FullbrightMixin",
-		"FullbrightWorldRendererMixin"
+		"FullbrightWorldRendererMixin",
+		"RequestRespawnMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
