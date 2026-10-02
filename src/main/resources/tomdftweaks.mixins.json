@@ -1,7 +1,7 @@
 {
 	"required": true,
 	"package": "tom.tomdftweaks.mixin",
-	"compatibilityLevel": "JAVA_21",
+	"compatibilityLevel": "JAVA_25",
 	"mixins": [],
 	"client": [
 		"AutoRespawnMixin",
@@ -10,7 +10,6 @@
 		"InventoryDistributeMixin",
 		"WorldEditAxeMixin",
 		"FullbrightMixin",
-		"FullbrightWorldRendererMixin",
 		"RequestRespawnMixin"
 	],
 	"injectors": {

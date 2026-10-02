@@ -10,21 +10,21 @@ import org.lwjgl.glfw.GLFW;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.option.KeyBinding.Category;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.GameMode;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.KeyMapping.Category;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.GameType;
 
 public class TomDfTweaksClient implements ClientModInitializer {
 
-	public static MinecraftClient client = MinecraftClient.getInstance();
+	public static Minecraft client = Minecraft.getInstance();
 
 	public static String currentPlot = "";
 	public static boolean inDevMode = false;
@@ -34,7 +34,7 @@ public class TomDfTweaksClient implements ClientModInitializer {
 	public static ArrayList<Integer> delaysToSend = new ArrayList<Integer>(0);
 
 	private boolean spectatorWasPressed = false;
-	private GameMode previousGameMode = null;
+	private GameType previousGameMode = null;
 
 	public static Map<String, Boolean> noteBlockSounds = new HashMap<String, Boolean>();
 	public static Map<String, Boolean> fullbright = new HashMap<String, Boolean>();
@@ -59,12 +59,12 @@ public class TomDfTweaksClient implements ClientModInitializer {
 				if (fullbright == null) {
 					fullbright = new HashMap<String, Boolean>();
 				}
-				client.player.sendMessage(net.minecraft.text.Text.literal("§7[§2TomDfTweaks§7] §aSettings loaded."),
-						false);
+				client.gui.chatListener().handleSystemMessage(
+						Component.literal("§7[§2TomDfTweaks§7] §aSettings loaded."), false);
 
-				client.options.getSoundVolumeOption(SoundCategory.RECORDS)
-						.setValue(1.0);
-				client.options.write();
+				client.options.getSoundSourceOptionInstance(SoundSource.RECORDS)
+						.set(1.0);
+				client.options.save();
 			}
 		});
 
@@ -95,8 +95,8 @@ public class TomDfTweaksClient implements ClientModInitializer {
 					delaysToSend.add(60);
 				} else if (messageStr.contains("You are now in dev mode.")) {
 					inDevMode = true;
-					client.inGameHud.getChatHud()
-							.addMessage(Text.literal("§7[§2TomDfTweaks§7] §aNow in dev mode."));
+					client.gui.hud.getChat()
+							.addClientSystemMessage(Component.literal("§7[§2TomDfTweaks§7] §aNow in dev mode."));
 				} else if (joinPlot.matches()) {
 					String newPlot = joinPlot.group(1) + "|" + joinPlot.group(2);
 					if (!newPlot.equals(currentPlot)) {
@@ -105,49 +105,49 @@ public class TomDfTweaksClient implements ClientModInitializer {
 					}
 					currentPlot = newPlot;
 					inDevMode = false;
-					client.inGameHud.getChatHud()
-							.addMessage(Text.literal("§7[§2TomDfTweaks§7] §aJoined plot \"§r" + currentPlot + "§a\"."));
+					client.gui.hud.getChat()
+							.addClientSystemMessage(Component.literal("§7[§2TomDfTweaks§7] §aJoined plot \"§r" + currentPlot + "§a\"."));
 
 					boolean enableNoteBlockSounds = (!noteBlockSounds.containsKey(currentPlot)
 							|| noteBlockSounds.get(currentPlot));
 					//TomDfTweaks.LOGGER.info("enablenoteblocksounds: " + enableNoteBlockSounds);
-					client.options.getSoundVolumeOption(SoundCategory.RECORDS)
-							.setValue(enableNoteBlockSounds ? 1.0 : 0.0);
-					client.options.write();
-					client.inGameHud.getChatHud().addMessage(Text.literal("§7[§2TomDfTweaks§7] §6Note blocks "
+					client.options.getSoundSourceOptionInstance(SoundSource.RECORDS)
+							.set(enableNoteBlockSounds ? 1.0 : 0.0);
+					client.options.save();
+					client.gui.hud.getChat().addClientSystemMessage(Component.literal("§7[§2TomDfTweaks§7] §6Note blocks "
 							+ (enableNoteBlockSounds ? "§eenabled" : "§csilenced") + "§6."));
 
 					currentFullbright = (fullbright.containsKey(currentPlot)
 							&& fullbright.get(currentPlot));
-					client.inGameHud.getChatHud().addMessage(Text.literal("§7[§2TomDfTweaks§7] §6Fullbright "
+					client.gui.hud.getChat().addClientSystemMessage(Component.literal("§7[§2TomDfTweaks§7] §6Fullbright "
 							+ (currentFullbright ? "§eenabled" : "§cdisabled") + "§6."));
 				}
 			}
 		});
 
-		KeyBinding toggleNoteBlockKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+		KeyMapping toggleNoteBlockKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.tomdftweaks.noteblocks", // 1. Translation Key (Name)
-				InputUtil.Type.KEYSYM, // 2. Input Type
+				InputConstants.Type.KEYSYM, // 2. Input Type
 				GLFW.GLFW_KEY_M, // 3. The Key Code (int)
 				Category.MISC // 4. Translation Key (Category)
 		));
 
-		KeyBinding toggleFullbrightKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+		KeyMapping toggleFullbrightKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.tomdftweaks.fullbright", // 1. Translation Key (Name)
-				InputUtil.Type.KEYSYM, // 2. Input Type
+				InputConstants.Type.KEYSYM, // 2. Input Type
 				GLFW.GLFW_KEY_N, // 3. The Key Code (int)
 				Category.MISC // 4. Translation Key (Category)
 		));
 
-		KeyBinding spectatorKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+		KeyMapping spectatorKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.tomdftweaks.spectator",
-				InputUtil.Type.KEYSYM,
+				InputConstants.Type.KEYSYM,
 				GLFW.GLFW_KEY_V,
 				Category.MISC));
 
-		KeyBinding modeSwitchKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+		KeyMapping modeSwitchKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.tomdftweaks.modeswitch",
-				InputUtil.Type.KEYSYM,
+				InputConstants.Type.KEYSYM,
 				GLFW.GLFW_KEY_B,
 				Category.MISC));
 
@@ -159,7 +159,7 @@ public class TomDfTweaksClient implements ClientModInitializer {
 
 			// Restore sprint toggle after respawning
 			if (shouldRestoreSprint && client.player != null && client.player.isAlive()) {
-				client.options.sprintKey.setPressed(true);
+				client.options.keySprint.setDown(true);
 				shouldRestoreSprint = false;
 			}
 
@@ -168,54 +168,54 @@ public class TomDfTweaksClient implements ClientModInitializer {
 				commandSendCountdown++;
 				if (commandSendCountdown >= delaysToSend.get(0)) {
 					commandSendCountdown = 0;
-					client.getNetworkHandler().sendChatCommand(commandsToSend.remove(0));
+					client.getConnection().sendCommand(commandsToSend.remove(0));
 					delaysToSend.remove(0);
 				}
 			}
 
 			//Toggle note blocks
-			while (toggleNoteBlockKey.wasPressed()) {
+			while (toggleNoteBlockKey.consumeClick()) {
 				if (client.player != null) {
-					float currentVolume = client.options.getSoundVolume(SoundCategory.RECORDS);
+					float currentVolume = client.options.getSoundSourceVolume(SoundSource.RECORDS);
 					double newVolume = (currentVolume > 0.1f) ? 0.0 : 1.0;
 
 					noteBlockSounds.put(currentPlot, newVolume > 0.1f);
 
-					client.options.getSoundVolumeOption(SoundCategory.RECORDS).setValue(newVolume);
-					client.options.write();
+					client.options.getSoundSourceOptionInstance(SoundSource.RECORDS).set(newVolume);
+					client.options.save();
 
 					String status = (newVolume > 0.1) ? "§eenabled" : "§csilenced";
-					client.player.sendMessage(
-							Text.literal(
+					client.gui.chatListener().handleSystemMessage(
+							Component.literal(
 									"§7[§2TomDfTweaks§7] §6Note blocks for §r" + currentPlot + " " + status + "§6."),
 							true);
 				}
 			}
 
 			//Toggle fullbright
-			while (toggleFullbrightKey.wasPressed()) {
+			while (toggleFullbrightKey.consumeClick()) {
 				if (client.player != null) {
 					currentFullbright = !currentFullbright;
 
 					fullbright.put(currentPlot, currentFullbright);
-					if (client.worldRenderer != null) {
+					if (client.levelExtractor != null) {
 						// This forces the game to throw away the old "dark" chunk meshes
 						// and rebuild them using the new Fullbright 'pack' logic.
-						client.worldRenderer.reload();
+						client.levelExtractor.allChanged();
 					}
 
 					String status = (currentFullbright) ? "§eenabled" : "§cdisabled";
-					client.player.sendMessage(
-							Text.literal(
+					client.gui.chatListener().handleSystemMessage(
+							Component.literal(
 									"§7[§2TomDfTweaks§7] §6Fullbright for §r" + currentPlot + " " + status + "§6."),
 							true);
 				}
 			}
 
 			// Mode switch (dev/play) with location preservation
-			while (modeSwitchKey.wasPressed()) {
+			while (modeSwitchKey.consumeClick()) {
 				if (client.player != null) {
-					BlockPos pos = client.player.getBlockPos();
+					BlockPos pos = client.player.blockPosition();
 
 					if (inDevMode) {
 						devLocation = pos;
@@ -241,19 +241,19 @@ public class TomDfTweaksClient implements ClientModInitializer {
 
 			//Spectator mode
 			if (!inDevMode) {
-				boolean spectatorIsPressed = spectatorKey.isPressed();
+				boolean spectatorIsPressed = spectatorKey.isDown();
 
 				if (spectatorIsPressed && !spectatorWasPressed) {
-					GameMode current = client.interactionManager.getCurrentGameMode();
-					if (current != GameMode.SPECTATOR) {
+					GameType current = client.gameMode.getPlayerMode();
+					if (current != GameType.SPECTATOR) {
 						previousGameMode = current;
-						client.player.networkHandler.sendChatCommand("gamemode spectator");
+						client.player.connection.sendCommand("gamemode spectator");
 					}
 					spectatorWasPressed = true;
 				} else if (!spectatorIsPressed && spectatorWasPressed) {
 					if (previousGameMode != null) {
-						client.player.networkHandler
-								.sendChatCommand("gamemode " + previousGameMode.asString());
+						client.player.connection
+								.sendCommand("gamemode " + previousGameMode.getSerializedName());
 						previousGameMode = null;
 					}
 					spectatorWasPressed = false;

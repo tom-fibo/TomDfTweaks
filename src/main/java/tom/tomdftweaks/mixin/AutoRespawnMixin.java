@@ -1,15 +1,16 @@
 package tom.tomdftweaks.mixin;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.DeathScreen;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.screens.DeathScreen;
+import net.minecraft.client.gui.screens.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tom.tomdftweaks.TomDfTweaksClient;
 
-@Mixin(MinecraftClient.class)
+@Mixin(Gui.class)
 public class AutoRespawnMixin {
 
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
@@ -17,7 +18,7 @@ public class AutoRespawnMixin {
         if (!(screen instanceof DeathScreen))
             return;
 
-        MinecraftClient client = (MinecraftClient) (Object) this;
+        Minecraft client = Minecraft.getInstance();
 
         // Suppress duplicate death screens while waiting for respawn packet
         if (TomDfTweaksClient.awaitingRespawn) {
@@ -32,7 +33,7 @@ public class AutoRespawnMixin {
         if (!rapidDeath) {
             TomDfTweaksClient.awaitingRespawn = true;
             if (client.player != null) {
-                client.player.requestRespawn();
+                client.player.respawn();
             }
             ci.cancel();
         }

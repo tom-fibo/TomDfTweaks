@@ -2,15 +2,15 @@ package tom.tomdftweaks.mixin;
 
 import java.util.Optional;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.packet.c2s.common.CustomClickActionC2SPacket;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.Style;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.protocol.common.ServerboundCustomClickActionPacket;
+import net.minecraft.resources.Identifier;
 
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,22 +23,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ChatRunCommandPasteMixin {
 
     // DiamondFire sends plot commands as a custom click event rather than vanilla run_command.
-    private static final Identifier PLOT_COMMAND_ID = Identifier.of("hypercube", "plot_command");
+    private static final Identifier PLOT_COMMAND_ID = Identifier.fromNamespaceAndPath("hypercube", "plot_command");
 
     @Shadow
-    protected TextFieldWidget chatField;
+    protected EditBox input;
 
     @Shadow
     public abstract void insertText(String text, boolean overwrite);
 
     @Shadow
-    public abstract void sendMessage(String message, boolean addToHistory);
+    public abstract void handleChatInput(String message, boolean addToHistory);
 
     @Shadow
-    public abstract String normalize(String message);
+    public abstract String normalizeChatMessage(String message);
 
     // Shift+click on a command chat link pastes the command instead of running it.
-    @Inject(method = "handleClickEvent", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "handleComponentClicked", at = @At("HEAD"), cancellable = true)
     private void onHandleClickEvent(Style style, boolean insert, CallbackInfoReturnable<Boolean> cir) {
         if (!insert)
             return;
@@ -53,53 +53,53 @@ public abstract class ChatRunCommandPasteMixin {
     // Shift+Enter sends the chat text as a command; Ctrl+Enter sends it as a hypercube:plot_command,
     // bypassing the normal chat message/command validation that kicks on illegal characters.
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    private void onKeyPressed(KeyInput input, CallbackInfoReturnable<Boolean> cir) {
-        if (input.hasCtrl() && input.key() == GLFW.GLFW_KEY_7) {
+    private void onKeyPressed(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
+        if (input.hasControlDown() && input.key() == GLFW.GLFW_KEY_7) {
             insertRaw("§");
             cir.setReturnValue(true);
             return;
         }
-        if (input.hasCtrl() && input.key() == GLFW.GLFW_KEY_N) {
+        if (input.hasControlDown() && input.key() == GLFW.GLFW_KEY_N) {
             insertRaw("\n");
             cir.setReturnValue(true);
             return;
         }
-        if (input.isEnter() && input.hasShift() != input.hasCtrl()) {
-            String text = this.normalize(this.chatField.getText());
+        if (input.isConfirmation() && input.hasShiftDown() != input.hasControlDown()) {
+            String text = this.normalizeChatMessage(this.input.getValue());
             if (text.isEmpty())
                 return;
 
-            if (input.hasShift()) {
-                this.sendMessage(text.startsWith("/") ? text : "/" + text, true);
+            if (input.hasShiftDown()) {
+                this.handleChatInput(text.startsWith("/") ? text : "/" + text, true);
             } else {
                 sendPlotCommand(text);
             }
 
             // Clear the field so the sent text isn't kept as a draft when chat is reopened.
-            this.chatField.setText("");
-            MinecraftClient.getInstance().setScreen(null);
+            this.input.setValue("");
+            Minecraft.getInstance().gui.setScreen(null);
             cir.setReturnValue(true);
         }
     }
 
-    // TextFieldWidget.write() strips "invalid" chars (including § and \n) via StringHelper.stripInvalidChars;
-    // setText() has no such filtering, so splice the text ourselves and go through that instead.
+    // EditBox.insertText() strips "invalid" chars (including § and \n) via StringUtil.filterText;
+    // setValue() has no such filtering, so splice the text ourselves and go through that instead.
     private void insertRaw(String toInsert) {
-        int cursor = this.chatField.getCursor();
-        String current = this.chatField.getText();
-        this.chatField.setText(current.substring(0, cursor) + toInsert + current.substring(cursor));
-        this.chatField.setCursor(cursor + toInsert.length(), false);
+        int cursor = this.input.getCursorPosition();
+        String current = this.input.getValue();
+        this.input.setValue(current.substring(0, cursor) + toInsert + current.substring(cursor));
+        this.input.moveCursorTo(cursor + toInsert.length(), false);
     }
 
     private static void sendPlotCommand(String command) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.player == null)
             return;
 
-        NbtCompound payload = new NbtCompound();
+        CompoundTag payload = new CompoundTag();
         payload.putString("command", command);
-        client.player.networkHandler.sendPacket(new CustomClickActionC2SPacket(PLOT_COMMAND_ID, Optional.of(payload)));
-        client.inGameHud.getChatHud().addToMessageHistory(command);
+        client.player.connection.send(new ServerboundCustomClickActionPacket(PLOT_COMMAND_ID, Optional.of(payload)));
+        client.gui.hud.getChat().addRecentChat(command);
     }
 
     private static String getCommand(ClickEvent clickEvent) {
@@ -108,8 +108,8 @@ public abstract class ChatRunCommandPasteMixin {
         }
         if (clickEvent instanceof ClickEvent.Custom custom && custom.id().equals(PLOT_COMMAND_ID)) {
             return custom.payload()
-                    .filter(NbtCompound.class::isInstance)
-                    .map(NbtCompound.class::cast)
+                    .filter(CompoundTag.class::isInstance)
+                    .map(CompoundTag.class::cast)
                     .flatMap(nbt -> nbt.getString("command"))
                     .orElse(null);
         }

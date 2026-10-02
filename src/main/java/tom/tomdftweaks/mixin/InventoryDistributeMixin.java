@@ -1,15 +1,15 @@
 package tom.tomdftweaks.mixin;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,41 +18,41 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tom.tomdftweaks.TomDfTweaksClient;
 
-@Mixin(HandledScreen.class)
+@Mixin(AbstractContainerScreen.class)
 public class InventoryDistributeMixin {
 
     @Shadow
-    protected Slot focusedSlot;
+    protected Slot hoveredSlot;
     @Shadow
-    protected ScreenHandler handler;
+    protected AbstractContainerMenu menu;
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    private void onKeyPressed(KeyInput keyInput, CallbackInfoReturnable<Boolean> cir) {
+    private void onKeyPressed(KeyEvent keyInput, CallbackInfoReturnable<Boolean> cir) {
         if (!TomDfTweaksClient.inDevMode)
             return;
         if (keyInput.key() != GLFW.GLFW_KEY_R)
             return;
-        if (this.focusedSlot == null || !this.focusedSlot.hasStack())
+        if (this.hoveredSlot == null || !this.hoveredSlot.hasItem())
             return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null || client.interactionManager == null)
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.gameMode == null)
             return;
 
-        if (!this.handler.getCursorStack().isEmpty())
+        if (!this.menu.getCarried().isEmpty())
             return;
 
-        int syncId = this.handler.syncId;
+        int syncId = this.menu.containerId;
 
-        if (this.focusedSlot.inventory instanceof PlayerInventory) {
+        if (this.hoveredSlot.container instanceof Inventory) {
             // If clicking inventory slot, move 1 to container.
 
             // Find first empty container slot (not in player inventory)
             Slot targetSlot = null;
-            for (Slot slot : this.handler.slots) {
-                if (slot.inventory instanceof PlayerInventory)
+            for (Slot slot : this.menu.slots) {
+                if (slot.container instanceof Inventory)
                     continue;
-                if (!slot.hasStack() && slot.canInsert(this.focusedSlot.getStack())) {
+                if (!slot.hasItem() && slot.mayPlace(this.hoveredSlot.getItem())) {
                     targetSlot = slot;
                     break;
                 }
@@ -61,23 +61,23 @@ public class InventoryDistributeMixin {
                 return;
 
             // Pick up source stack
-            client.interactionManager.clickSlot(syncId, this.focusedSlot.id, 0, SlotActionType.PICKUP, client.player);
+            client.gameMode.handleContainerInput(syncId, this.hoveredSlot.index, 0, ContainerInput.PICKUP, client.player);
             // Place 1 item into target (right-click places 1)
-            client.interactionManager.clickSlot(syncId, targetSlot.id, 1, SlotActionType.PICKUP, client.player);
+            client.gameMode.handleContainerInput(syncId, targetSlot.index, 1, ContainerInput.PICKUP, client.player);
             // Put remaining back in source
-            client.interactionManager.clickSlot(syncId, this.focusedSlot.id, 0, SlotActionType.PICKUP, client.player);
+            client.gameMode.handleContainerInput(syncId, this.hoveredSlot.index, 0, ContainerInput.PICKUP, client.player);
         } else {
             // If clicking container slot, copy to inventory.
 
             // Find first empty inventory slot
             int targetSlot = -1;
             for (int checkSlot = 0; checkSlot < 36; checkSlot++) {
-                ItemStack currentStack = client.player.getInventory().getStack(checkSlot);
+                ItemStack currentStack = client.player.getInventory().getItem(checkSlot);
                 if (currentStack.getItem() == Items.AIR && targetSlot == -1) {
                     targetSlot = checkSlot;
                 }
-                if (ItemStack.areItemsAndComponentsEqual(currentStack, this.focusedSlot.getStack())
-                        && currentStack.getCount() < currentStack.getMaxCount()) {
+                if (ItemStack.isSameItemSameComponents(currentStack, this.hoveredSlot.getItem())
+                        && currentStack.getCount() < currentStack.getMaxStackSize()) {
                     targetSlot = checkSlot;
                     break;
                 }
@@ -86,12 +86,12 @@ public class InventoryDistributeMixin {
                 return;
 
             // Copy container stack
-            ItemStack duplicateStack = this.focusedSlot.getStack()
-                    .copyWithCount(client.player.getInventory().getStack(targetSlot).getCount() + 1);
-            client.player.networkHandler
-                    .sendPacket(new CreativeInventoryActionC2SPacket(targetSlot + (targetSlot < 9 ? 36 : 0),
+            ItemStack duplicateStack = this.hoveredSlot.getItem()
+                    .copyWithCount(client.player.getInventory().getItem(targetSlot).getCount() + 1);
+            client.player.connection
+                    .send(new ServerboundSetCreativeModeSlotPacket(targetSlot + (targetSlot < 9 ? 36 : 0),
                             duplicateStack));
-            client.player.getInventory().setStack(targetSlot, duplicateStack);
+            client.player.getInventory().setItem(targetSlot, duplicateStack);
         }
 
         cir.setReturnValue(true);
