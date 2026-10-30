@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.lwjgl.glfw.GLFW;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -84,13 +82,15 @@ public class TomDfTweaksClient implements ClientModInitializer {
 			// 'overlay' is true if the message appears above the hotbar instead of in chat
 			if (!overlay) {
 				String messageStr = message.getString();
-				//TomDfTweaks.LOGGER.info("Received game message: " + messageStr);
+				// TomDfTweaks.LOGGER.info("Received game message: " + messageStr);
 				Matcher joinPlot = Pattern.compile("» Joined game: (.+) by (.+)\\.").matcher(messageStr);
-				/*if (messageStr.contains("Welcome back to DiamondFire!")) {
-					currentPlot = "";
-					commandsToSend.add("support queue");
-					delaysToSend.add(20);
-				} else */if (messageStr.contains("Use /tip to show your appreciation and receive a")) {
+				/*
+				 * if (messageStr.contains("Welcome back to DiamondFire!")) {
+				 * currentPlot = "";
+				 * commandsToSend.add("support queue");
+				 * delaysToSend.add(20);
+				 * } else
+				 */if (messageStr.contains("Use /tip to show your appreciation and receive a")) {
 					commandsToSend.add("tip");
 					delaysToSend.add(60);
 				} else if (messageStr.contains("You are now in dev mode.")) {
@@ -106,49 +106,47 @@ public class TomDfTweaksClient implements ClientModInitializer {
 					currentPlot = newPlot;
 					inDevMode = false;
 					client.gui.hud.getChat()
-							.addClientSystemMessage(Component.literal("§7[§2TomDfTweaks§7] §aJoined plot \"§r" + currentPlot + "§a\"."));
+							.addClientSystemMessage(Component
+									.literal("§7[§2TomDfTweaks§7] §aJoined plot \"§r" + currentPlot + "§a\"."));
 
 					boolean enableNoteBlockSounds = (!noteBlockSounds.containsKey(currentPlot)
 							|| noteBlockSounds.get(currentPlot));
-					//TomDfTweaks.LOGGER.info("enablenoteblocksounds: " + enableNoteBlockSounds);
+					// TomDfTweaks.LOGGER.info("enablenoteblocksounds: " + enableNoteBlockSounds);
 					client.options.getSoundSourceOptionInstance(SoundSource.RECORDS)
 							.set(enableNoteBlockSounds ? 1.0 : 0.0);
 					client.options.save();
-					client.gui.hud.getChat().addClientSystemMessage(Component.literal("§7[§2TomDfTweaks§7] §6Note blocks "
-							+ (enableNoteBlockSounds ? "§eenabled" : "§csilenced") + "§6."));
+					client.gui.hud.getChat()
+							.addClientSystemMessage(Component.literal("§7[§2TomDfTweaks§7] §6Note blocks "
+									+ (enableNoteBlockSounds ? "§eenabled" : "§csilenced") + "§6."));
 
 					currentFullbright = (fullbright.containsKey(currentPlot)
 							&& fullbright.get(currentPlot));
-					client.gui.hud.getChat().addClientSystemMessage(Component.literal("§7[§2TomDfTweaks§7] §6Fullbright "
-							+ (currentFullbright ? "§eenabled" : "§cdisabled") + "§6."));
+					client.gui.hud.getChat()
+							.addClientSystemMessage(Component.literal("§7[§2TomDfTweaks§7] §6Fullbright "
+									+ (currentFullbright ? "§eenabled" : "§cdisabled") + "§6."));
 				}
 			}
 		});
 
 		KeyMapping toggleNoteBlockKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.tomdftweaks.noteblocks", // 1. Translation Key (Name)
-				InputConstants.Type.KEYSYM, // 2. Input Type
-				GLFW.GLFW_KEY_M, // 3. The Key Code (int)
-				Category.MISC // 4. Translation Key (Category)
+				InputConstants.KEY_M, // 2. Keycode (int)
+				Category.MISC // 3. Translation Key (Category)
 		));
 
 		KeyMapping toggleFullbrightKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-				"key.tomdftweaks.fullbright", // 1. Translation Key (Name)
-				InputConstants.Type.KEYSYM, // 2. Input Type
-				GLFW.GLFW_KEY_N, // 3. The Key Code (int)
-				Category.MISC // 4. Translation Key (Category)
-		));
+				"key.tomdftweaks.fullbright",
+				InputConstants.KEY_N,
+				Category.MISC));
 
 		KeyMapping spectatorKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.tomdftweaks.spectator",
-				InputConstants.Type.KEYSYM,
-				GLFW.GLFW_KEY_V,
+				InputConstants.KEY_V,
 				Category.MISC));
 
 		KeyMapping modeSwitchKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.tomdftweaks.modeswitch",
-				InputConstants.Type.KEYSYM,
-				GLFW.GLFW_KEY_B,
+				InputConstants.KEY_B,
 				Category.MISC));
 
 		ClientTickEvents.END_CLIENT_TICK.register((a) -> {
@@ -163,7 +161,7 @@ public class TomDfTweaksClient implements ClientModInitializer {
 				shouldRestoreSprint = false;
 			}
 
-			//Send commands, if queued
+			// Send commands, if queued
 			if (commandsToSend.size() > 0) {
 				commandSendCountdown++;
 				if (commandSendCountdown >= delaysToSend.get(0)) {
@@ -173,7 +171,7 @@ public class TomDfTweaksClient implements ClientModInitializer {
 				}
 			}
 
-			//Toggle note blocks
+			// Toggle note blocks
 			while (toggleNoteBlockKey.consumeClick()) {
 				if (client.player != null) {
 					float currentVolume = client.options.getSoundSourceVolume(SoundSource.RECORDS);
@@ -192,7 +190,7 @@ public class TomDfTweaksClient implements ClientModInitializer {
 				}
 			}
 
-			//Toggle fullbright
+			// Toggle fullbright
 			while (toggleFullbrightKey.consumeClick()) {
 				if (client.player != null) {
 					currentFullbright = !currentFullbright;
@@ -239,7 +237,7 @@ public class TomDfTweaksClient implements ClientModInitializer {
 				}
 			}
 
-			//Spectator mode
+			// Spectator mode
 			if (!inDevMode) {
 				boolean spectatorIsPressed = spectatorKey.isDown();
 

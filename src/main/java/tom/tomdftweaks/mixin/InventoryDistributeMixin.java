@@ -10,12 +10,14 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import com.mojang.blaze3d.platform.InputConstants;
+
 import tom.tomdftweaks.TomDfTweaksClient;
 
 @Mixin(AbstractContainerScreen.class)
@@ -30,7 +32,7 @@ public class InventoryDistributeMixin {
     private void onKeyPressed(KeyEvent keyInput, CallbackInfoReturnable<Boolean> cir) {
         if (!TomDfTweaksClient.inDevMode)
             return;
-        if (keyInput.key() != GLFW.GLFW_KEY_R)
+        if (keyInput.key() != InputConstants.KEY_R)
             return;
         if (this.hoveredSlot == null || !this.hoveredSlot.hasItem())
             return;
@@ -61,11 +63,13 @@ public class InventoryDistributeMixin {
                 return;
 
             // Pick up source stack
-            client.gameMode.handleContainerInput(syncId, this.hoveredSlot.index, 0, ContainerInput.PICKUP, client.player);
+            client.gameMode.handleContainerInput(syncId, this.hoveredSlot.index, 0, ContainerInput.PICKUP,
+                    client.player);
             // Place 1 item into target (right-click places 1)
             client.gameMode.handleContainerInput(syncId, targetSlot.index, 1, ContainerInput.PICKUP, client.player);
             // Put remaining back in source
-            client.gameMode.handleContainerInput(syncId, this.hoveredSlot.index, 0, ContainerInput.PICKUP, client.player);
+            client.gameMode.handleContainerInput(syncId, this.hoveredSlot.index, 0, ContainerInput.PICKUP,
+                    client.player);
         } else {
             // If clicking container slot, copy to inventory.
 

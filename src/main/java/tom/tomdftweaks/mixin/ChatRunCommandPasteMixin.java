@@ -12,17 +12,19 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.protocol.common.ServerboundCustomClickActionPacket;
 import net.minecraft.resources.Identifier;
 
-import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 @Mixin(ChatScreen.class)
 public abstract class ChatRunCommandPasteMixin {
 
-    // DiamondFire sends plot commands as a custom click event rather than vanilla run_command.
+    // DiamondFire sends plot commands as a custom click event rather than vanilla
+    // run_command.
     private static final Identifier PLOT_COMMAND_ID = Identifier.fromNamespaceAndPath("hypercube", "plot_command");
 
     @Shadow
@@ -50,21 +52,23 @@ public abstract class ChatRunCommandPasteMixin {
         }
     }
 
-    // Shift+Enter sends the chat text as a command; Ctrl+Enter sends it as a hypercube:plot_command,
-    // bypassing the normal chat message/command validation that kicks on illegal characters.
+    // Shift+Enter sends the chat text as a command; Ctrl+Enter sends it as a
+    // hypercube:plot_command,
+    // bypassing the normal chat message/command validation that kicks on illegal
+    // characters.
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void onKeyPressed(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
-        if (input.hasControlDown() && input.key() == GLFW.GLFW_KEY_7) {
+        if (input.hasControlDown() && input.key() == InputConstants.KEY_7) {
             insertRaw("§");
             cir.setReturnValue(true);
             return;
         }
-        if (input.hasControlDown() && input.key() == GLFW.GLFW_KEY_N) {
+        if (input.hasControlDown() && input.key() == InputConstants.KEY_N) {
             insertRaw("\n");
             cir.setReturnValue(true);
             return;
         }
-        if (input.isConfirmation() && input.hasShiftDown() != input.hasControlDown()) {
+        if (input.isConfirmation() && (input.hasShiftDown() != input.hasControlDown()) && input.hasAltDown()) {
             String text = this.normalizeChatMessage(this.input.getValue());
             if (text.isEmpty())
                 return;
@@ -82,8 +86,10 @@ public abstract class ChatRunCommandPasteMixin {
         }
     }
 
-    // EditBox.insertText() strips "invalid" chars (including § and \n) via StringUtil.filterText;
-    // setValue() has no such filtering, so splice the text ourselves and go through that instead.
+    // EditBox.insertText() strips "invalid" chars (including § and \n) via
+    // StringUtil.filterText;
+    // setValue() has no such filtering, so splice the text ourselves and go through
+    // that instead.
     private void insertRaw(String toInsert) {
         int cursor = this.input.getCursorPosition();
         String current = this.input.getValue();
